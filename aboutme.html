@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About Me — Vincent | YCWC</title>
+  <meta name="description"
+    content="Learn more about Vincent Julius Albert — passionate about technology, design, and innovation." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="futuristic.css" />
+  <link rel="stylesheet" href="intro.css" />
+  <link rel="stylesheet" href="sidebar.css" />
+  <link rel="stylesheet" href="aboutme.css" />
+  <link rel="stylesheet" href="chatbot.css" />
+  <script src="futuristic-unlock.js"></script>
+</head>
+
+<body>
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  <div class="hologram-container" aria-hidden="true">
+    <div class="hologram"></div>
+  </div>
+
+  <header class="header">
+    <a class="brand" href="index.html" aria-label="YCWC home"><strong>DV</strong></a>
+    <div style="display: flex; align-items: center; gap: 0.75rem;" id="header-brand-area">
+      <a href="camera.html" class="btn-try-binary" style="text-decoration: none; color: #00f0ff; border-color: rgba(0, 240, 255, 0.4);">📷 AI Camera</a>
+      <button id="btn-try-binary" class="btn-try-binary" title="Replay Binary Intro">✦ Try</button>
+      <button class="sidebar-toggle" onclick="showSidebar()" aria-label="Open menu">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ═══════ IMPROVED SIDEBAR ═══════ -->
+  <div id="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-brand">
+        <span class="sidebar-brand-icon">✦</span>
+        <span class="sidebar-brand-text">DOMS</span>
+      </div>
+      <button class="sidebar-close" onclick="hideSidebar()" aria-label="Close menu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <nav class="sidebar-nav">
+      <span class="sidebar-label">Navigation</span>
+      <a href="index.html" class="sidebar-link">
+        <span class="sidebar-link-icon">🏠</span>
+        <span>Home</span>
+      </a>
+      <a href="camera.html" class="sidebar-link" style="color: #00f0ff;">
+        <span class="sidebar-link-icon">📷</span>
+        <span>AI Camera Platform</span>
+      </a>
+      <a href="aboutme.html" class="sidebar-link active">
+        <span class="sidebar-link-icon">👤</span>
+        <span>About Me</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-nav">
+      <span class="sidebar-label">On This Page</span>
+      <a href="#hero-about" class="sidebar-link" onclick="hideSidebar()">
+        <span class="sidebar-link-icon">📋</span>
+        <span>Profile</span>
+      </a>
+      <a href="#skills" class="sidebar-link" onclick="hideSidebar()">
+        <span class="sidebar-link-icon">🧠</span>
+        <span>Skills</span>
+      </a>
+      <a href="#certificates" class="sidebar-link" onclick="hideSidebar()">
+        <span class="sidebar-link-icon">🏆</span>
+        <span>Certificates</span>
+      </a>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="sidebar-footer-card">
+        <p class="sidebar-footer-text">Built with 💜 by Vincent</p>
+        <p class="sidebar-footer-copy">&copy; 2026 DOMS</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- penutup -->
+  <div id="penutup" class="hide"></div>
+
+  <main>
+
+    <!-- ═══════ HERO / PROFILE ═══════ -->
+    <section id="hero-about" class="container hero-container">
+      <div class="about-hero-split">
+        <!-- Profile Card -->
+        <div class="about-profile-card">
+          <div class="profile-avatar-ring">
+            <div class="profile-avatar">
+              <img src="32c9fd01-48f7-497e-a7f5-14ab1834abe6.jpg" alt="Vincent Julius Albert" />
+            </div>
+          </div>
+          <div class="profile-info">
+            <span class="profile-badge">Owner of the Website</span>
+            <h1 class="profile-name glow">Vincent Julius Albert</h1>
+            <p class="profile-tagline">Passionate about Technology, Design & Innovation</p>
+            <div class="profile-social">
+              <span class="social-pill">🎨 Designer</span>
+              <span class="social-pill">💻 Developer</span>
+              <span class="social-pill">🚀 Innovator</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bio Card -->
+        <div class="about-bio-card">
+          <div class="bio-header">
+            <span class="bio-eyebrow">ABOUT ME</span>
+            <div class="bio-accent-line"></div>
+          </div>
+          <p class="bio-lead">
+            Hello there! I am a passionate and dedicated individual with a strong interest in technology, design, and
+            innovation.
+          </p>
+          <p class="bio-text">
+            I enjoy exploring new ideas and finding creative solutions to challenges. My goal is to make a positive
+            impact through my work and contribute to the advancement of technology and design.
+          </p>
+          <p class="bio-text">
+            It's a pleasure to have you here — please feel free to explore my website and learn more about me and my
+            journey!
+          </p>
+          <a class="btn-about" href="#certificates">View My Certificates ↓</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════ SKILLS ═══════ -->
+    <section id="skills" class="container content-block">
+      <div class="block-badge">🧠 EXPERTISE</div>
+      <h2 class="block-title glow">Skills & Capabilities</h2>
+      <p class="block-subtitle">Built for clarity, polish, and product impact. Helping teams shape product strategy,
+        design compelling interfaces, and deliver strong digital systems.</p>
+
+      <div class="skills-grid">
+        <article class="skill-card">
+          <div class="skill-icon-wrapper">
+            <span class="skill-icon">🧠</span>
+          </div>
+          <h3>Coding</h3>
+          <p>I enjoy creating websites and apps with HTML, CSS, and JavaScript, always exploring new technologies to
+            build useful and engaging digital experiences.</p>
+          <div class="skill-bar">
+            <div class="skill-bar-fill" style="width: 90%;" data-label="90%"></div>
+          </div>
+        </article>
+
+        <article class="skill-card">
+          <div class="skill-icon-wrapper">
+            <span class="skill-icon">🎨</span>
+          </div>
+          <h3>Visual Design</h3>
+          <p>Refined UI systems, typography, color theory, and polished component layouts.</p>
+          <div class="skill-bar">
+            <div class="skill-bar-fill" style="width: 85%;" data-label="85%"></div>
+          </div>
+        </article>
+
+        <article class="skill-card">
+          <div class="skill-icon-wrapper">
+            <span class="skill-icon">💻</span>
+          </div>
+          <h3>Web Development</h3>
+          <p>HTML, CSS, JavaScript — building responsive, accessible, and performant web experiences.</p>
+          <div class="skill-bar">
+            <div class="skill-bar-fill" style="width: 80%;" data-label="80%"></div>
+          </div>
+        </article>
+
+        <article class="skill-card">
+          <div class="skill-icon-wrapper">
+            <span class="skill-icon">🚀</span>
+          </div>
+          <h3>Execution</h3>
+          <p>Design collaboration, interactive prototypes, and production-ready handoff.</p>
+          <div class="skill-bar">
+            <div class="skill-bar-fill" style="width: 88%;" data-label="88%"></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ═══════ CERTIFICATES ═══════ -->
+    <section id="certificates" class="container content-block">
+      <div class="block-badge">🏆 ACHIEVEMENTS</div>
+      <h2 class="block-title glow">My Certificates</h2>
+      <p class="block-subtitle">Recognized achievements and professional certifications that validate my skills and
+        dedication to continuous learning.</p>
+
+      <div class="certificates-grid">
+
+        <!-- Certificate 1 -->
+        <div class="cert-card" data-cert-src="paaayth.jpg" data-cert-title="Python Coder" data-cert-issuer="Programming Certificate" data-cert-date="2024">
+          <div class="cert-image-wrapper">
+            <img src="paaayth.jpg" alt="Python Coder Certificate" class="cert-image" loading="lazy" />
+            <div class="cert-placeholder">
+              <span class="cert-placeholder-icon">📜</span>
+              <span class="cert-placeholder-text">Certificate Preview</span>
+            </div>
+            <div class="cert-hover-overlay">
+              <span class="cert-zoom-btn">🔍 View Certificate</span>
+            </div>
+          </div>
+          <div class="cert-info">
+            <span class="cert-number">#01</span>
+            <h3 class="cert-title">Python Coder</h3>
+            <p class="cert-issuer">Programming Certificate</p>
+            <span class="cert-date">2024</span>
+          </div>
+        </div>
+
+        <!-- Certificate 2 -->
+        <div class="cert-card" data-cert-src="datasc.jpg" data-cert-title="Python for Data Science" data-cert-issuer="Data Science Certificate" data-cert-date="2024">
+          <div class="cert-image-wrapper">
+            <img src="datasc.jpg" alt="Python for Data Science Certificate" class="cert-image" loading="lazy" />
+            <div class="cert-placeholder">
+              <span class="cert-placeholder-icon">📜</span>
+              <span class="cert-placeholder-text">Certificate Preview</span>
+            </div>
+            <div class="cert-hover-overlay">
+              <span class="cert-zoom-btn">🔍 View Certificate</span>
+            </div>
+          </div>
+          <div class="cert-info">
+            <span class="cert-number">#02</span>
+            <h3 class="cert-title">Python for Data Science</h3>
+            <p class="cert-issuer">Data Science Certificate</p>
+            <span class="cert-date">2024</span>
+          </div>
+        </div>
+
+        <!-- Certificate 3 -->
+        <div class="cert-card" data-cert-src="webas.jpg" data-cert-title="Teens Websites Developer" data-cert-issuer="Web Development Certificate" data-cert-date="2024">
+          <div class="cert-image-wrapper">
+            <img src="webas.jpg" alt="Teens Websites Developer Certificate" class="cert-image" loading="lazy" />
+            <div class="cert-placeholder">
+              <span class="cert-placeholder-icon">📜</span>
+              <span class="cert-placeholder-text">Certificate Preview</span>
+            </div>
+            <div class="cert-hover-overlay">
+              <span class="cert-zoom-btn">🔍 View Certificate</span>
+            </div>
+          </div>
+          <div class="cert-info">
+            <span class="cert-number">#03</span>
+            <h3 class="cert-title">Teens Websites Developer</h3>
+            <p class="cert-issuer">Web Development Certificate</p>
+            <span class="cert-date">2024</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="about-footer">
+    <div class="footer-inner">
+      <p class="footer-brand-text"><strong>Vincent Julius Albert</strong> — YCWC Project</p>
+      <p class="footer-copy">&copy; 2026 DOMS. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <button id="scrollToTopBtn" class="scroll-to-top" aria-label="Scroll to top">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+      stroke-linecap="round" stroke-linejoin="round">
+      <path d="M18 15l-6-6-6 6" />
+    </svg>
+  </button>
+
+  <!-- ═══════ BINARY FLOOD CANVAS ═══════ -->
+  <canvas id="binary-flood-canvas" class="binary-flood-canvas" aria-hidden="true"></canvas>
+
+  <!-- ═══════ FULL-SCREEN 3-SECOND BINARY FACE INTRO OVERLAY ═══════ -->
+  <div id="binary-intro-overlay" class="binary-intro-overlay">
+    <div class="binary-intro-canvas-wrap">
+      <canvas id="binary-intro-canvas"></canvas>
+      <div class="binary-scanline"></div>
+    </div>
+    <div class="binary-intro-header">
+      <span class="binary-intro-badge">✦ NEURAL BIOMETRIC MATRIX</span>
+      <h1 class="binary-intro-title glitch-text" data-text="Welcome to my Page">Welcome to my Page</h1>
+      <p class="binary-intro-sub">INITIALIZING PROFILE MATRIX • 100%</p>
+    </div>
+    <div class="binary-intro-footer">
+      <div class="binary-timer-text">ENTERING IN <span id="binary-countdown">3</span>s &bull; CLICK ANYWHERE TO SKIP</div>
+    </div>
+  <!-- ═══════ FULLSCREEN CERTIFICATE LIGHTBOX MODAL ═══════ -->
+  <div id="cert-lightbox-modal" class="cert-lightbox-modal" aria-hidden="true">
+    <div class="cert-lightbox-backdrop" id="cert-lightbox-backdrop"></div>
+    <div class="cert-lightbox-dialog">
+      <button class="cert-lightbox-close" id="cert-lightbox-close" aria-label="Close modal">&times;</button>
+      <div class="cert-lightbox-img-container">
+        <img id="cert-lightbox-img" src="" alt="Certificate Large Preview" />
+      </div>
+      <div class="cert-lightbox-caption">
+        <div>
+          <h3 id="cert-lightbox-title">Certificate Title</h3>
+          <p id="cert-lightbox-issuer">Issuer</p>
+        </div>
+        <span id="cert-lightbox-date" class="cert-date">2024</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="particles.js" defer></script>
+  <script src="sidebar.js"></script>
+  <script src="aboutme.js" defer></script>
+  <script src="chatbot.js" defer></script>
+</body>
+
+</html>
