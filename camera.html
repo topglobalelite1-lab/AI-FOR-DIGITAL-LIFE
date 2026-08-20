@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CyberSelfie AI & Camera Platform</title>
+  <meta name="description" content="Interactive AI camera platform with finger pose detection, dynamic pre-shot camera blur, DOM photo selector, and Dom access portal.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- MediaPipe Hands & Camera Utils for Real-time Finger Pose AI -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="futuristic.css">
+  <link rel="stylesheet" href="sidebar.css">
+  <link rel="stylesheet" href="camera.css">
+  <script src="futuristic-unlock.js"></script>
+</head>
+
+<body>
+  <!-- Dynamic Particles Background Canvas -->
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+  <!-- Header Navigation -->
+  <header class="camera-header">
+    <div class="brand-group" id="header-brand-area">
+      <a href="index.html" class="brand"><strong>DV</strong> CAM</a>
+      <span class="platform-badge">✦ AI SELFIE & FINGER POSE PLATFORM</span>
+    </div>
+
+    <nav class="nav-links">
+      <a href="cyber_hand.html" class="nav-btn" style="color: #00ff88; border-color: rgba(0, 255, 136, 0.4);">🖐️ Hand Glitch HUD</a>
+      <a href="index.html" class="nav-btn">Home</a>
+      <a href="aboutme.html" class="nav-btn">About Me</a>
+      <a href="dom_vault.html" class="dom-login-btn dom-only" title="Dom Access Only" style="display: none;">🔒 Dom Vault Portal</a>
+    </nav>
+  </header>
+
+  <!-- Main Camera Container -->
+  <main class="camera-container">
+    <div class="hero-intro">
+      <h1 class="page-title"><span class="neon-text">CYBER-SELFIE</span> FINGER BLUR CAMERA</h1>
+      <p class="page-subtitle">Strike any finger pose (✌️ 🖐️ ☝️ 👍) to automatically blur the camera feed right before capturing! Select and save any captured DOM photo below.</p>
+    </div>
+
+    <!-- Camera Viewfinder & Control Panel -->
+    <section class="camera-section">
+      <div class="camera-frame-wrapper" id="camera-frame">
+
+        <!-- Status Header Overlay -->
+        <div class="viewfinder-header">
+          <div class="rec-indicator" id="rec-dot">
+            <span class="dot"></span> LIVE CAM
+          </div>
+          
+          <!-- Blur Status Indicator -->
+          <div class="blur-status-badge" id="blur-status">
+            <span class="status-icon">👁️</span> FEED CLEAR
+          </div>
+        </div>
+
+        <!-- Main Video & Canvas Detection Display Area -->
+        <div class="video-container" id="video-wrapper">
+          <video id="webcam" autoplay playsinline muted></video>
+          <canvas id="detection-canvas"></canvas>
+        </div>
+
+        <!-- Camera Control Bar -->
+        <div class="camera-controls">
+          <!-- Start/Stop Camera -->
+          <button id="btn-toggle-cam" class="btn-cam">📷 Start Camera</button>
+          
+          <!-- Manual Shutter Button -->
+          <button id="btn-snap" class="btn-cam btn-primary">⚡ Take Photo (Shutter)</button>
+          
+          <!-- Simulate Finger Pose Test -->
+          <button id="btn-sim-finger" class="btn-cam btn-warning" title="Test finger pose blur without webcam hand pose">
+            🖐️ Test Finger Blur
+          </button>
+        </div>
+
+        <!-- Feature Settings & Account Bar -->
+        <div class="camera-settings-bar">
+          <div class="toggle-group">
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-blur-feature" checked>
+              <span class="toggle-slider"></span>
+            </label>
+            <span class="toggle-label">Blur-Before-Capture Mode (Finger Detection)</span>
+          </div>
+
+          <div class="account-group" style="display: flex; align-items: center; gap: 0.75rem;">
+            <div class="user-badge" style="font-family:'Space Grotesk',sans-serif; font-size:0.85rem; font-weight:700; color:#00f0ff; background:rgba(0,240,255,0.08); border:1px solid rgba(0,240,255,0.25); padding:0.3rem 0.8rem; border-radius:8px;">
+              👤 ACC: <span id="active-username" style="color:#ffffff;">Guest</span>
+              <button id="btn-switch-account" style="margin-left:0.5rem; background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:#fff; padding:2px 8px; border-radius:6px; font-size:0.75rem; cursor:pointer;" title="Switch user account">Switch</button>
+            </div>
+
+            <div class="counter-badge">
+              PHOTOS: <span id="photo-count-badge">0</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- DOM Photo Gallery & Selector Section -->
+    <section class="gallery-section">
+      <div class="section-header">
+        <h2>📸 Captured DOM Photo Selector</h2>
+        <p>Click any photo below to inspect, view details, or save directly to your device.</p>
+      </div>
+
+      <!-- DOM Photo Grid (Injected Grouped as PHOTO 1, PHOTO 2, etc.) -->
+      <div class="gallery-grid" id="visitor-photo-grid">
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon">📷</div>
+          <p>No DOM photos captured yet. Start your camera, strike a finger pose, or click ⚡ Take Photo!</p>
+        </div>
+      </div>
+
+      <!-- Selected Photo Preview Modal / Action Bar -->
+      <div class="photo-preview-bar hidden" id="photo-preview-bar">
+        <div class="preview-img-box">
+          <img id="selected-photo-img" src="" alt="Selected Selfie Preview">
+        </div>
+        <div class="preview-info-box">
+          <h3 id="selected-photo-title">PHOTO 1</h3>
+          <p id="selected-photo-meta">Captured: Just now • Feed: Blurred</p>
+          <div class="preview-actions">
+            <button id="btn-download-selected" class="btn-action btn-download">
+              ⬇ Save / Download Selected Photo
+            </button>
+            <button id="btn-delete-selected" class="btn-action btn-danger">
+              🗑️ Delete Photo
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="camera-footer">
+    <p>CyberSelfie AI & Camera Platform © 2026<span class="dom-only" style="display: none;"> | Restricted <a href="dom_vault.html" style="color: #f472b6; text-decoration: underline;">Dom Vault Portal</a> Access</span></p>
+  </footer>
+
+  <!-- Scripts -->
+  <script src="particles.js"></script>
+  <script src="camera.js"></script>
+</body>
+
+</html>
+

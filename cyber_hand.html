@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber HUD — Finger Glitch Portal</title>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+      user-select: none;
+    }
+
+    #canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    video { display: none; }
+
+    /* ── Loading Screen ── */
+    #loading {
+      position: fixed;
+      inset: 0;
+      background: #000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 300;
+      gap: 18px;
+      transition: opacity 0.7s ease;
+    }
+    #loading.out { opacity: 0; pointer-events: none; }
+
+    .ld-logo {
+      font-size: 3rem;
+      font-weight: 900;
+      letter-spacing: 0.6em;
+      color: #00ff88;
+      text-shadow: 0 0 40px #00ff88, 0 0 80px rgba(0,255,136,0.4);
+      animation: ldPulse 1.6s ease-in-out infinite;
+    }
+    @keyframes ldPulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    .ld-msg {
+      font-size: 0.62rem;
+      letter-spacing: 0.3em;
+      color: #00f0ff;
+      text-transform: uppercase;
+      opacity: 0.75;
+    }
+
+    .ld-bar-wrap {
+      width: 240px;
+      height: 2px;
+      background: rgba(0,255,136,0.1);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .ld-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #00ff88, #00f0ff);
+      border-radius: 2px;
+      box-shadow: 0 0 12px #00ff88;
+      transition: width 0.4s ease;
+    }
+
+    /* ── HUD Overlay ── */
+    .hud {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+    }
+
+    .corner {
+      position: absolute;
+      width: 52px;
+      height: 52px;
+      opacity: 0.65;
+    }
+    .corner svg { width: 100%; height: 100%; }
+    .corner.tl { top: 18px; left: 18px; }
+    .corner.tr { top: 18px; right: 18px; transform: scaleX(-1); }
+    .corner.bl { bottom: 18px; left: 18px; transform: scaleY(-1); }
+    .corner.br { bottom: 18px; right: 18px; transform: scale(-1,-1); }
+
+    #hud-status {
+      position: absolute;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.6rem;
+      letter-spacing: 0.28em;
+      color: #00ff88;
+      text-shadow: 0 0 12px #00ff88;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+
+    .hud-dot {
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      background: #00ff88;
+      border-radius: 50%;
+      margin-right: 8px;
+      box-shadow: 0 0 8px #00ff88;
+      animation: dotBlink 1s step-end infinite;
+      vertical-align: middle;
+    }
+    @keyframes dotBlink { 0%,100%{opacity:1} 50%{opacity:0.1} }
+
+    .hud-bottom {
+      position: absolute;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.55rem;
+      letter-spacing: 0.2em;
+      color: rgba(0,240,255,0.45);
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .hud-side {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.5rem;
+      letter-spacing: 0.2em;
+      color: rgba(0,255,136,0.35);
+      writing-mode: vertical-rl;
+      text-transform: uppercase;
+    }
+    .hud-side.left  { left: 18px; }
+    .hud-side.right { right: 18px; transform: translateY(-50%) rotate(180deg); }
+
+    /* Back Home Button */
+    .back-btn {
+      position: fixed;
+      top: 18px;
+      right: 24px;
+      z-index: 200;
+      color: #00f0ff;
+      text-decoration: none;
+      font-family: 'Space Grotesk', 'Courier New', monospace;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      padding: 8px 16px;
+      border: 1px solid rgba(0,240,255,0.4);
+      border-radius: 8px;
+      background: rgba(0,10,30,0.6);
+      backdrop-filter: blur(8px);
+      transition: all 0.25s ease;
+      box-shadow: 0 0 15px rgba(0,240,255,0.2);
+    }
+    .back-btn:hover {
+      background: rgba(0,240,255,0.2);
+      box-shadow: 0 0 25px rgba(0,240,255,0.5);
+      transform: translateY(-2px);
+    }
+
+    /* Interactive Control Bar Overlay */
+    .hud-controls {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 200;
+      display: flex;
+      gap: 10px;
+      background: rgba(0, 10, 30, 0.75);
+      border: 1px solid rgba(0, 255, 136, 0.4);
+      border-radius: 16px;
+      padding: 8px 14px;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 30px rgba(0, 255, 136, 0.25);
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 90vw;
+    }
+
+    .hud-btn {
+      font-family: 'Space Grotesk', 'Courier New', monospace;
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: #94a3b8;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 10px;
+      padding: 6px 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hud-btn:hover {
+      background: rgba(0, 255, 136, 0.15);
+      border-color: rgba(0, 255, 136, 0.5);
+      color: #00ff88;
+      transform: translateY(-2px);
+    }
+
+    .hud-btn.active {
+      background: rgba(0, 255, 136, 0.22);
+      border-color: #00ff88;
+      color: #00ff88;
+      box-shadow: 0 0 15px rgba(0, 255, 136, 0.4);
+    }
+
+    /* CRT scanlines */
+    .scanlines {
+      position: fixed;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        transparent,
+        transparent 2px,
+        rgba(0,0,0,0.055) 2px,
+        rgba(0,0,0,0.055) 4px
+      );
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    /* Vignette */
+    .vignette {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 45%, rgba(0,0,0,0.65) 100%);
+      pointer-events: none;
+      z-index: 60;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loading -->
+  <div id="loading">
+    <div class="ld-logo">HUD</div>
+    <div class="ld-msg" id="ld-msg">Initializing hand tracking...</div>
+    <div class="ld-bar-wrap"><div class="ld-bar-fill" id="ld-bar"></div></div>
+  </div>
+
+  <!-- Back button -->
+  <a href="index.html" class="back-btn">← Exit Cyber HUD</a>
+
+  <!-- Interactive Control Bar -->
+  <div class="hud-controls" id="hud-controls">
+    <button class="hud-btn active" data-shape="auto">✋ Auto-Pose</button>
+    <button class="hud-btn" data-shape="draw">✍️ Air Draw</button>
+    <button class="hud-btn" data-shape="triangle">🔺 Triangle</button>
+    <button class="hud-btn" data-shape="box">🟦 Rectangle</button>
+    <button class="hud-btn" data-shape="circle">⭕ Circle</button>
+    <button class="hud-btn" data-shape="star">⭐ Star</button>
+    <button class="hud-btn" data-shape="heart">🫶 Heart</button>
+    <div style="width: 1px; height: 20px; background: rgba(255,255,255,0.2); align-self: center;"></div>
+    <button class="hud-btn" id="btn-widen" style="color: #00f0ff;">➕ Widen</button>
+    <button class="hud-btn" id="btn-shrink" style="color: #00f0ff;">➖ Shrink</button>
+    <button class="hud-btn" id="btn-clear" style="color: #ff0050; border-color: rgba(255,0,80,0.4);">🗑️ Delete Shape</button>
+  </div>
+
+  <!-- Canvas -->
+  <canvas id="canvas"></canvas>
+  <video id="webcam" playsinline autoplay muted></video>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="corner tl">
+      <svg viewBox="0 0 52 52" fill="none" stroke="#00ff88" stroke-width="2">
+        <polyline points="52,2 2,2 2,52"/>
+        <line x1="2" y1="2" x2="12" y2="2" stroke-width="4"/>
+        <line x1="2" y1="2" x2="2" y2="12" stroke-width="4"/>
+      </svg>
+    </div>
+    <div class="corner tr">
+      <svg viewBox="0 0 52 52" fill="none" stroke="#00ff88" stroke-width="2">
+        <polyline points="52,2 2,2 2,52"/>
+        <line x1="2" y1="2" x2="12" y2="2" stroke-width="4"/>
+        <line x1="2" y1="2" x2="2" y2="12" stroke-width="4"/>
+      </svg>
+    </div>
+    <div class="corner bl">
+      <svg viewBox="0 0 52 52" fill="none" stroke="#00ff88" stroke-width="2">
+        <polyline points="52,2 2,2 2,52"/>
+        <line x1="2" y1="2" x2="12" y2="2" stroke-width="4"/>
+        <line x1="2" y1="2" x2="2" y2="12" stroke-width="4"/>
+      </svg>
+    </div>
+    <div class="corner br">
+      <svg viewBox="0 0 52 52" fill="none" stroke="#00ff88" stroke-width="2">
+        <polyline points="52,2 2,2 2,52"/>
+        <line x1="2" y1="2" x2="12" y2="2" stroke-width="4"/>
+        <line x1="2" y1="2" x2="2" y2="12" stroke-width="4"/>
+      </svg>
+    </div>
+
+    <div id="hud-status"><span class="hud-dot"></span>SCANNING — RAISE YOUR HAND</div>
+    <div class="hud-side left">CYBER HUD v2.0 &nbsp; ◈ &nbsp; MULTI-SHAPE ENGINE</div>
+    <div class="hud-side right">MEDIAPIPE HANDS &nbsp; ◈ &nbsp; REAL-TIME</div>
+  </div>
+
+  <div class="scanlines"></div>
+  <div class="vignette"></div>
+
+  <!-- MediaPipe CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+
+  <script>
+  /* ═══════════════════════════════════════════════════════════
+     CYBER HUD — Finger Glitch Portal
+     Uses MediaPipe Hands to detect fingertips in real-time.
+     Fingertips form a polygon → glitch video effect inside.
+  ═══════════════════════════════════════════════════════════ */
+
+  const canvas  = document.getElementById('canvas');
+  const ctx     = canvas.getContext('2d');
+  const video   = document.getElementById('webcam');
+  const statusEl = document.getElementById('hud-status');
+  const ldMsg   = document.getElementById('ld-msg');
+  const ldBar   = document.getElementById('ld-bar');
+  const loading = document.getElementById('loading');
+
+  // Offscreen canvases
+  const mirrorC = document.createElement('canvas'); // mirrored webcam
+  const mirrorX = mirrorC.getContext('2d');
+  const glitchC = document.createElement('canvas'); // glitched version
+  const glitchX = glitchC.getContext('2d');
+
+  let W = 0, H = 0;
+
+  function resize() {
+    W = canvas.width = mirrorC.width = glitchC.width = window.innerWidth;
+    H = canvas.height = mirrorC.height = glitchC.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  // Fingertip landmark indices (MediaPipe Hands)
+  // 4=thumb tip, 8=index tip, 12=middle tip, 16=ring tip, 20=pinky tip
+  const TIPS = [4, 8, 12, 16, 20];
+
+  // ── Glitch state ──
+  let burstActive = false;
+  let burstFrames = 0;
+  let frameCount  = 0;
+
+  // ── Convert normalized landmark → canvas coords (mirrored) ──
+  function lm2c(lm) {
+    return { x: (1 - lm.x) * W, y: lm.y * H };
+  }
+
+  // ── Build mirrored webcam frame ──
+  function buildMirror(src) {
+    mirrorX.save();
+    mirrorX.scale(-1, 1);
+    mirrorX.drawImage(src, -W, 0, W, H);
+    mirrorX.restore();
+  }
+
+  // ── Build glitch frame from mirror canvas ──
+  function buildGlitch() {
+    frameCount++;
+
+    // Random burst trigger
+    if (Math.random() > 0.982) { burstActive = true; burstFrames = 0; }
+    if (burstActive) { burstFrames++; if (burstFrames > 10) burstActive = false; }
+
+    const intensity = burstActive ? 35 : 10;
+
+    // 1. Base draw
+    glitchX.drawImage(mirrorC, 0, 0, W, H);
+
+    // 2. Horizontal strip displacements (the core "glitch" look)
+    const strips = burstActive ? 18 : 6;
+    for (let i = 0; i < strips; i++) {
+      if (Math.random() > 0.42) {
+        const sy  = Math.random() * H;
+        const sh  = Math.random() * (burstActive ? 22 : 9) + 2;
+        const dx  = (Math.random() - 0.5) * intensity * 5;
+        glitchX.drawImage(mirrorC, 0, sy, W, sh, dx, sy, W, sh);
+      }
+    }
+
+    // 3. Occasional full-width block glitch
+    if (burstActive && Math.random() > 0.5) {
+      const sy = Math.random() * H;
+      const sh = Math.random() * 40 + 5;
+      glitchX.fillStyle = Math.random() > 0.5
+        ? `rgba(0,255,136,${Math.random() * 0.6})`
+        : `rgba(255,0,80,${Math.random() * 0.5})`;
+      glitchX.fillRect(0, sy, W, sh);
+    }
+
+    // 4. Color tint: alternates between cyan/green and magenta on burst
+    glitchX.globalCompositeOperation = 'color';
+    glitchX.globalAlpha = burstActive ? 0.4 : 0.28;
+    glitchX.fillStyle = burstActive && Math.random() > 0.5 ? '#ff00ff' : '#00ffaa';
+    glitchX.fillRect(0, 0, W, H);
+    glitchX.globalAlpha = 1;
+    glitchX.globalCompositeOperation = 'source-over';
+  }
+
+  // ── Draw clipped glitch portal at fingertip polygon ──
+  function drawPortal(tips) {
+    if (tips.length < 3) return;
+
+    ctx.save();
+
+    // Clip to fingertip polygon
+    ctx.beginPath();
+    ctx.moveTo(tips[0].x, tips[0].y);
+    for (let i = 1; i < tips.length; i++) ctx.lineTo(tips[i].x, tips[i].y);
+    ctx.closePath();
+    ctx.clip();
+
+    // ── Glitch base ──
+    ctx.globalAlpha = 0.92;
+    ctx.drawImage(glitchC, 0, 0, W, H);
+
+    // ── Chromatic aberration: red channel shifted left ──
+    ctx.globalCompositeOperation = 'screen';
+    ctx.globalAlpha = 0.45;
+    ctx.filter = 'sepia(1) saturate(15) hue-rotate(-40deg)';
+    ctx.drawImage(glitchC, -12, 0, W, H);
+
+    // ── Chromatic aberration: cyan channel shifted right ──
+    ctx.globalAlpha = 0.38;
+    ctx.filter = 'sepia(1) saturate(15) hue-rotate(148deg)';
+    ctx.drawImage(glitchC, 12, 0, W, H);
+
+    ctx.filter = 'none';
+    ctx.globalAlpha = 1;
+    ctx.globalCompositeOperation = 'source-over';
+
+    // ── Scanlines inside portal ──
+    for (let y = 0; y < H; y += 4) {
+      ctx.fillStyle = 'rgba(0,0,0,0.14)';
+      ctx.fillRect(0, y, W, 2);
+    }
+
+    // ── Subtle vignette inside the portal shape ──
+    const cx = tips.reduce((s, p) => s + p.x, 0) / tips.length;
+    const cy = tips.reduce((s, p) => s + p.y, 0) / tips.length;
+    const maxR = tips.reduce((m, p) => Math.max(m, Math.hypot(p.x - cx, p.y - cy)), 0) * 1.3;
+    const vGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, maxR);
+    vGrad.addColorStop(0, 'transparent');
+    vGrad.addColorStop(1, 'rgba(0,0,0,0.45)');
+    ctx.fillStyle = vGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    ctx.restore();
+  }
+
+  // ── Draw hand skeleton + fingertip decorations ──
+  function drawSkeleton(landmarks) {
+    const tips = TIPS.map(i => lm2c(landmarks[i]));
+
+    // ── Faint landmark dots (all 21 points) ──
+    ctx.save();
+    ctx.globalAlpha = 0.2;
+    ctx.fillStyle = '#00f0ff';
+    for (const lm of landmarks) {
+      const p = lm2c(lm);
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // ── Hand skeleton connections ──
+    const CONNECTIONS = [
+      [0,1],[1,2],[2,3],[3,4],       // thumb
+      [0,5],[5,6],[6,7],[7,8],       // index
+      [5,9],[9,10],[10,11],[11,12],  // middle
+      [9,13],[13,14],[14,15],[15,16],// ring
+      [13,17],[17,18],[18,19],[19,20],// pinky
+      [0,17]                         // palm edge
+    ];
+
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0,240,255,0.25)';
+    ctx.lineWidth = 1;
+    for (const [a, b] of CONNECTIONS) {
+      const pa = lm2c(landmarks[a]);
+      const pb = lm2c(landmarks[b]);
+      ctx.beginPath();
+      ctx.moveTo(pa.x, pa.y);
+      ctx.lineTo(pb.x, pb.y);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // ── Web: lines connecting all 5 fingertips ──
+    ctx.save();
+    ctx.strokeStyle = 'rgba(0,255,136,0.55)';
+    ctx.lineWidth = 1;
+    ctx.shadowColor = '#00ff88';
+    ctx.shadowBlur = 10;
+    for (let i = 0; i < tips.length; i++) {
+      for (let j = i + 1; j < tips.length; j++) {
+        ctx.beginPath();
+        ctx.moveTo(tips[i].x, tips[i].y);
+        ctx.lineTo(tips[j].x, tips[j].y);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+
+    // ── Polygon outline with glow ──
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(tips[0].x, tips[0].y);
+    for (let i = 1; i < tips.length; i++) ctx.lineTo(tips[i].x, tips[i].y);
+    ctx.closePath();
+
+    // Outer glow
+    ctx.strokeStyle = 'rgba(0,255,136,0.18)';
+    ctx.lineWidth = 14;
+    ctx.stroke();
+    // Mid glow
+    ctx.strokeStyle = 'rgba(0,255,136,0.35)';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+    // Bright edge
+    ctx.strokeStyle = '#00ff88';
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = '#00ff88';
+    ctx.shadowBlur = 20;
+    ctx.stroke();
+    ctx.restore();
+
+    // ── Fingertip dots ──
+    tips.forEach((pt) => {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 9, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(0,255,136,0.4)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(pt.x, pt.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.shadowColor = '#00ff88';
+      ctx.shadowBlur = 22;
+      ctx.fill();
+      ctx.restore();
+    });
+
+    return tips;
+  }
+
+    // ── Interactive Particles & Shockwaves System ──
+    const sparks = [];
+    const shockwaves = [];
+    let wasPinching = false;
+    let elasticSnapPt = null;
+    let elasticSnapFactor = 0;
+
+    function addSparks(x, y, color, count = 8) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = Math.random() * 6 + 2;
+        sparks.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1.0,
+          color
+        });
+      }
+    }
+
+    function addShockwave(x, y, color) {
+      shockwaves.push({ x, y, radius: 10, maxRadius: 70, life: 1.0, color });
+    }
+
+    function updateParticles() {
+      // Render & update sparks
+      for (let i = sparks.length - 1; i >= 0; i--) {
+        const s = sparks[i];
+        s.x += s.vx;
+        s.y += s.vy;
+        s.life -= 0.045;
+        if (s.life <= 0) { sparks.splice(i, 1); continue; }
+
+        ctx.save();
+        ctx.globalAlpha = s.life;
+        ctx.fillStyle = s.color;
+        ctx.shadowColor = s.color;
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, 3.5 * s.life, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      // Render & update shockwaves
+      for (let i = shockwaves.length - 1; i >= 0; i--) {
+        const sw = shockwaves[i];
+        sw.radius += 5.5;
+        sw.life -= 0.04;
+        if (sw.life <= 0 || sw.radius >= sw.maxRadius) { shockwaves.splice(i, 1); continue; }
+
+        ctx.save();
+        ctx.globalAlpha = sw.life;
+        ctx.strokeStyle = sw.color;
+        ctx.lineWidth = 3 * sw.life;
+        ctx.shadowColor = sw.color;
+        ctx.shadowBlur = 20;
+        ctx.beginPath();
+        ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    // ── Active Shape Mode & Interactive State ──
+    let activeShapeMode = 'auto'; // 'auto' | 'draw' | 'triangle' | 'box' | 'circle' | 'star' | 'heart'
+    let shapeScaleMultiplier = 1.0;
+    let pinnedAnchors = [];      // Persistent pulled points in mid-air
+    let airDrawPoints = [];      // Air-drawn custom shape points
+
+    // Delete / Clear Shape Action
+    function deleteShape() {
+      pinnedAnchors = [];
+      airDrawPoints = [];
+      shapeScaleMultiplier = 1.0;
+      addShockwave(W / 2, H / 2, '#ff0050');
+      addSparks(W / 2, H / 2, '#ff0050', 25);
+    }
+
+    // Button event listeners for Shape Selector Toolbar
+    document.querySelectorAll('.hud-btn[data-shape]').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.hud-btn[data-shape]').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeShapeMode = btn.dataset.shape;
+        addShockwave(W / 2, H / 2, '#00ff88');
+        addSparks(W / 2, H / 2, '#00f0ff', 15);
+      });
+    });
+
+    document.getElementById('btn-widen').addEventListener('click', () => {
+      shapeScaleMultiplier += 0.35;
+      addShockwave(W / 2, H / 2, '#00f0ff');
+    });
+
+    document.getElementById('btn-shrink').addEventListener('click', () => {
+      shapeScaleMultiplier = Math.max(0.4, shapeScaleMultiplier - 0.25);
+      addShockwave(W / 2, H / 2, '#00f0ff');
+    });
+
+    document.getElementById('btn-clear').addEventListener('click', deleteShape);
+
+    // Screen Touch / Click Interaction
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('.hud-controls, .back-btn')) return;
+      addShockwave(e.clientX, e.clientY, '#00ff88');
+      addSparks(e.clientX, e.clientY, '#ff0050', 16);
+    });
+
+    // ── Dynamic Shape Points Generators ──
+    function getShapePoints(mode, landmarks) {
+      const tips = TIPS.map(i => lm2c(landmarks[i]));
+
+      // Centroid (center of hand)
+      const cx = landmarks.reduce((sum, lm) => sum + (1 - lm.x) * W, 0) / landmarks.length;
+      const cy = landmarks.reduce((sum, lm) => sum + lm.y * H, 0) / landmarks.length;
+
+      // Base radius scaled by shapeScaleMultiplier
+      const baseRadius = tips.reduce((sum, pt) => sum + Math.hypot(pt.x - cx, pt.y - cy), 0) / tips.length;
+      const radius = baseRadius * shapeScaleMultiplier;
+
+      let basePoints = [];
+
+      if (mode === 'draw') {
+        // Air Draw mode: index fingertip (8) adds points to airDrawPoints
+        const pIndex = lm2c(landmarks[8]);
+        if (airDrawPoints.length === 0 || Math.hypot(pIndex.x - airDrawPoints[airDrawPoints.length-1].x, pIndex.y - airDrawPoints[airDrawPoints.length-1].y) > 20) {
+          if (airDrawPoints.length < 50) airDrawPoints.push(pIndex);
+        }
+        basePoints = airDrawPoints.length >= 3 ? airDrawPoints : tips;
+      } else if (mode === 'triangle') {
+        for (let i = 0; i < 3; i++) {
+          const angle = (i * 2 * Math.PI / 3) - Math.PI / 2;
+          basePoints.push({ x: cx + Math.cos(angle) * radius * 1.3, y: cy + Math.sin(angle) * radius * 1.3 });
+        }
+      } else if (mode === 'box') {
+        const minX = cx - (radius * 1.2);
+        const maxX = cx + (radius * 1.2);
+        const minY = cy - (radius * 1.2);
+        const maxY = cy + (radius * 1.2);
+        basePoints = [
+          { x: minX, y: minY },
+          { x: maxX, y: minY },
+          { x: maxX, y: maxY },
+          { x: minX, y: maxY }
+        ];
+      } else if (mode === 'circle') {
+        const count = 16;
+        for (let i = 0; i < count; i++) {
+          const angle = (i * 2 * Math.PI) / count;
+          basePoints.push({ x: cx + Math.cos(angle) * radius * 1.15, y: cy + Math.sin(angle) * radius * 1.15 });
+        }
+      } else if (mode === 'star') {
+        const numPoints = 5;
+        for (let i = 0; i < numPoints * 2; i++) {
+          const r = (i % 2 === 0) ? radius * 1.4 : radius * 0.65;
+          const angle = (i * Math.PI / numPoints) - Math.PI / 2;
+          basePoints.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
+        }
+      } else if (mode === 'heart') {
+        const count = 30;
+        const scale = radius / 14;
+        for (let i = 0; i < count; i++) {
+          const t = (i / count) * Math.PI * 2;
+          const x = 16 * Math.pow(Math.sin(t), 3);
+          const y = -(13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t));
+          basePoints.push({ x: cx + x * scale, y: cy + y * scale });
+        }
+      } else {
+        // Default 'auto': Fingertip polygon scaled from centroid
+        basePoints = tips.map(pt => ({
+          x: cx + (pt.x - cx) * shapeScaleMultiplier,
+          y: cy + (pt.y - cy) * shapeScaleMultiplier
+        }));
+      }
+
+      // Combine base points with persistent pinned anchors
+      return [...basePoints, ...pinnedAnchors];
+    }
+
+    // ── Interactive Dual-Hand Pull & Release Physics ──
+    function drawDualHandStretch(hand1Lm, hand2Lm) {
+      const tips1 = getShapePoints(activeShapeMode, hand1Lm);
+      const tips2 = TIPS.map(i => lm2c(hand2Lm[i]));
+
+      // Hand 2 pinch point: midpoint between thumb tip (4) and index tip (8)
+      const pThumb = lm2c(hand2Lm[4]);
+      const pIndex = lm2c(hand2Lm[8]);
+      const pullerPt = { x: (pThumb.x + pIndex.x) / 2, y: (pThumb.y + pIndex.y) / 2 };
+      const pinchDist = Math.hypot(pThumb.x - pIndex.x, pThumb.y - pIndex.y);
+      const isPinching = pinchDist < 48; // Pinch threshold in pixels
+
+      // Find closest vertex in Hand 1 shape to Hand 2 puller point
+      let minDist = Infinity;
+      let closestIdx = 0;
+      tips1.forEach((pt, idx) => {
+        const d = Math.hypot(pt.x - pullerPt.x, pt.y - pullerPt.y);
+        if (d < minDist) { minDist = d; closestIdx = idx; }
+      });
+
+      const closestPt = tips1[closestIdx];
+      const pullDistance = Math.hypot(pullerPt.x - closestPt.x, pullerPt.y - closestPt.y);
+
+      // Detect SNAP RELEASE event: if pulled far enough (> 60px), PIN point in mid-air!
+      if (wasPinching && !isPinching) {
+        addShockwave(pullerPt.x, pullerPt.y, '#ff0050');
+        addShockwave(closestPt.x, closestPt.y, '#00ff88');
+        addSparks(pullerPt.x, pullerPt.y, '#ff0050', 20);
+        addSparks(closestPt.x, closestPt.y, '#00f0ff', 15);
+
+        // PERSISTENT PULL ANCHOR: If pulled > 60px away, pin point permanently in mid-air!
+        if (pullDistance > 60 && pinnedAnchors.length < 20) {
+          pinnedAnchors.push({ ...pullerPt });
+        } else {
+          elasticSnapPt = { ...pullerPt };
+          elasticSnapFactor = 1.0;
+        }
+      }
+      wasPinching = isPinching;
+
+      // Handle smooth elastic snap back animation
+      let activePullPt = null;
+      if (isPinching) {
+        activePullPt = pullerPt;
+        // Emit continuous tension sparks while pulling
+        if (Math.random() > 0.4) {
+          addSparks(pullerPt.x, pullerPt.y, Math.random() > 0.5 ? '#00f0ff' : '#ff0050', 2);
+        }
+      } else if (elasticSnapFactor > 0.05) {
+        // Elastic snap back calculation
+        elasticSnapFactor *= 0.65; // Quick elastic spring collapse
+        activePullPt = {
+          x: closestPt.x + (elasticSnapPt.x - closestPt.x) * elasticSnapFactor,
+          y: closestPt.y + (elasticSnapPt.y - closestPt.y) * elasticSnapFactor
+        };
+      }
+
+      // Build portal polygon
+      let portalPolygon = [...tips1];
+      if (activePullPt) {
+        // Inject puller point to stretch the portal
+        portalPolygon.splice(closestIdx + 1, 0, activePullPt);
+      }
+
+      // 1. Draw Portal (Stretched if pinched/snapping, Normal if released)
+      drawPortal(portalPolygon);
+
+      // 2. Draw Hand Skeletons
+      drawSkeleton(hand1Lm);
+      drawSkeleton(hand2Lm);
+
+      // 3. Render Particles & Shockwaves
+      updateParticles();
+
+      // 4. Draw Hand 2 Pinch / Release Visual Feedback
+      ctx.save();
+      // Draw line connecting Hand 2 thumb and index finger
+      ctx.beginPath();
+      ctx.moveTo(pThumb.x, pThumb.y);
+      ctx.lineTo(pIndex.x, pIndex.y);
+      ctx.strokeStyle = isPinching ? '#ff0050' : 'rgba(0, 240, 255, 0.4)';
+      ctx.lineWidth = isPinching ? 3 : 1.5;
+      ctx.stroke();
+
+      if (isPinching && activePullPt) {
+        // ── ACTIVE PULL MODE ──
+        tips1.forEach((pt, i) => {
+          const isTarget = (i === closestIdx);
+          ctx.beginPath();
+          ctx.moveTo(pullerPt.x, pullerPt.y);
+          ctx.lineTo(pt.x, pt.y);
+          ctx.strokeStyle = isTarget ? '#ff0050' : 'rgba(0, 240, 255, 0.4)';
+          ctx.lineWidth = isTarget ? 3.5 : 1;
+          ctx.shadowColor = isTarget ? '#ff0050' : 'transparent';
+          ctx.shadowBlur = isTarget ? 20 : 0;
+          if (isTarget) ctx.setLineDash([8, 4]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        });
+
+        ctx.beginPath();
+        ctx.arc(pullerPt.x, pullerPt.y, 16, 0, Math.PI * 2);
+        ctx.strokeStyle = '#ff0050';
+        ctx.lineWidth = 2.5;
+        ctx.shadowColor = '#ff0050';
+        ctx.shadowBlur = 25;
+        ctx.stroke();
+
+        ctx.fillStyle = '#ff0050';
+        ctx.font = 'bold 11px Courier New';
+        ctx.shadowColor = '#ff0050';
+        ctx.shadowBlur = 10;
+        ctx.fillText(`🧲 PULL LOCKED (${Math.round(pullDistance)}px)`, pullerPt.x + 20, pullerPt.y + 4);
+
+      } else {
+        // ── RELEASED / READY TO GRAB MODE ──
+        ctx.beginPath();
+        ctx.arc(pullerPt.x, pullerPt.y, 12, 0, Math.PI * 2);
+        ctx.strokeStyle = 'rgba(0, 240, 255, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([4, 4]);
+        ctx.stroke();
+
+        ctx.fillStyle = '#00f0ff';
+        ctx.font = '10px Courier New';
+        ctx.fillText('🤏 PINCH TO GRAB & PULL', pullerPt.x + 18, pullerPt.y + 4);
+      }
+      ctx.restore();
+    }
+
+    // Helper to check if hand is in a closed fist posture
+    function isFistGesture(landmarks) {
+      const cx = landmarks.reduce((sum, lm) => sum + (1 - lm.x) * W, 0) / landmarks.length;
+      const cy = landmarks.reduce((sum, lm) => sum + lm.y * H, 0) / landmarks.length;
+      const tips = TIPS.map(i => lm2c(landmarks[i]));
+      const avgDist = tips.reduce((sum, pt) => sum + Math.hypot(pt.x - cx, pt.y - cy), 0) / tips.length;
+      return avgDist < 42; // All fingers curled into palm
+    }
+
+    // ── Main results handler ──
+    function onResults(results) {
+      buildMirror(results.image);
+      buildGlitch();
+
+      ctx.drawImage(mirrorC, 0, 0, W, H);
+
+      const hands = results.multiHandLandmarks || [];
+      const handCount = hands.length;
+
+      if (handCount > 0) {
+        ctx.fillStyle = 'rgba(0,0,0,0.12)';
+        ctx.fillRect(0, 0, W, H);
+
+        // Check closed fist gesture to delete shape
+        let fistDetected = false;
+        for (const lm of hands) {
+          if (isFistGesture(lm)) {
+            fistDetected = true;
+            deleteShape();
+            break;
+          }
+        }
+
+        if (!fistDetected) {
+          if (handCount === 1) {
+            // 1 Hand: Selected Shape Portal
+            const shapePts = getShapePoints(activeShapeMode, hands[0]);
+            drawPortal(shapePts);
+            drawSkeleton(hands[0]);
+            updateParticles();
+          } else {
+            // 2 Hands: Interactive stretch & pull mode!
+            drawDualHandStretch(hands[0], hands[1]);
+          }
+        }
+      }
+
+      const dot = '<span class="hud-dot"></span>';
+      if (handCount === 0) {
+        statusEl.innerHTML = dot + 'SCANNING — RAISE YOUR HAND';
+      } else if (handCount === 1) {
+        statusEl.innerHTML = dot + `LOCK ON — SHAPE: [${activeShapeMode.toUpperCase()}] ACTIVE (✊ MAKE FIST TO DELETE)`;
+      } else {
+        statusEl.innerHTML = wasPinching
+          ? dot + '🧲 PULLING & STRETCHING PORTAL (PINNED ON RELEASE)!'
+          : dot + '🖐️ 2 HANDS DETECTED — 🤏 PINCH TO PULL & LEBARIN PORTAL!';
+      }
+    }
+
+  // ── Init MediaPipe Hands ──
+  ldMsg.textContent = 'Loading hand tracking model...';
+  ldBar.style.width = '15%';
+
+  const handsMP = new Hands({
+    locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`
+  });
+
+  handsMP.setOptions({
+    maxNumHands: 2,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.72,
+    minTrackingConfidence: 0.55,
+  });
+
+  handsMP.onResults(onResults);
+
+  ldBar.style.width = '55%';
+  ldMsg.textContent = 'Starting camera...';
+
+  const cam = new Camera(video, {
+    onFrame: async () => {
+      await handsMP.send({ image: video });
+    },
+    width: 1280,
+    height: 720,
+  });
+
+  cam.start()
+    .then(() => {
+      ldBar.style.width = '100%';
+      ldMsg.textContent = 'System online ✓';
+      setTimeout(() => {
+        loading.classList.add('out');
+        setTimeout(() => loading.style.display = 'none', 750);
+      }, 400);
+    })
+    .catch(() => {
+      ldMsg.textContent = '⚠ Camera blocked — allow camera access & refresh';
+      ldMsg.style.color = '#ff0050';
+      ldBar.style.background = '#ff0050';
+    });
+  </script>
+</body>
+</html>
